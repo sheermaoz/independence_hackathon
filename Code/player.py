@@ -15,14 +15,14 @@ class GameState(Enum):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, cwidth, speed, vwidth, screen, height):
+    def __init__(self, pos, cwidth, speed, screen, height):
         super().__init__()
         self.image0 = pygame.image.load('Resources/player.png').convert_alpha()
         self.image = pygame.transform.scale(self.image0, (30 / 1, 15 / 1))
         self.rect = self.image.get_rect(midtop=pos)
 
         self.speed = speed
-        self.max_x_constraint = cwidth + vwidth
+        self.max_x_constraint = cwidth
         self.ready_to_shoot = False
         self.laser_time = 0
         self.laser_cooldown = 600
@@ -33,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.detector = HandDetector(detectionCon=0.8, maxHands=1)
-        self.vwidth = vwidth
+        self.vwidth = 0
 
         self.fingers = None
         self.img = None
@@ -41,7 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.game_started = False
 
         self.screen = screen
-        self.ww = cwidth + vwidth
+        self.ww = cwidth
         self.wh = height
 
         self.laser_sound = pygame.mixer.Sound('Resources/laser.wav')
