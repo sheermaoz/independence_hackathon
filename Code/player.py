@@ -95,13 +95,18 @@ class Player(pygame.sprite.Sprite):
                     self.previous_center_y = center_y
 
                     center_x = np.clip(center_x, 100, 1150)
-                    center_y = np.clip(center_y, 350, 650)
+                    #center_y = np.clip(center_y, self.wh/2, self.wh - 30)
 
+
+                            # Ensure center_x and center_y are integers
+                    center_x = int(center_x)
+                    center_y = int(center_y)
                     map_x = center_x - 100
                     map_x = map_x * (self.max_x_constraint - self.vwidth)
                     map_x = map_x // 1150
                     self.rect.x = map_x + self.vwidth
-                    self.rect.y = center_y
+                    y = center_y + self.wh//2 - 100
+                    self.rect.y = np.clip(y, self.wh/2, self.wh - 70)
 
                     cv2.circle(img, (center_x, center_y), 20, (0, 255, 0), 2)
                     return True
