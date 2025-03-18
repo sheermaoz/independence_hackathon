@@ -14,8 +14,11 @@ class Game:
         self.player = pygame.sprite.GroupSingle(self.player_sprite)
         self.score_lives_height = 70  # Height for the score and lives section
         self.setup_game()
-        
-    
+        self.circle_center = (screen_width // 2, int(screen_height * 0.75))
+        self.circle_radius = 50
+        self.circle_timer_start = None
+        self.circle_duration = 1500  # 1.5 seconds
+        self.circle_active = False
     
     def setup_game(self):
         # health and score setup
@@ -185,7 +188,7 @@ class Game:
             victory_rect = victory_surf.get_rect(center=((window_width/2), (screen_height / 2)-150))
             screen.blit(victory_surf, victory_rect)
 
-            start_surf = self.font.render('Click to restart', False, 'white')
+            start_surf = self.font.render('Move The Ship To The Circle', False, 'white')
             start_rect = start_surf.get_rect(center=((window_width / 2), (screen_height / 2) + 150))
             screen.blit(start_surf, start_rect)
 
@@ -199,7 +202,7 @@ class Game:
                 extra.kill()
 
     def start_message(self):
-        start_surf = self.font.render('Click to start the game', False, 'white')
+        start_surf = self.font.render('Move The Ship To The Circle', False, 'white')
         start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(start_surf, start_rect)
 
@@ -208,18 +211,54 @@ class Game:
         dead_rect = dead_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(dead_surf, dead_rect)
 
-        start_surf = self.font.render('Click to restart', False, 'white')
+        start_surf = self.font.render('Move The Ship To The Circle', False, 'white')
         start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)+50))
         screen.blit(start_surf, start_rect)
+
+    def draw_circle_timer(self):
+        # Draw the white outline circle
+        pygame.draw.circle(screen, (255, 255, 255), self.circle_center, self.circle_radius, 2)
+        
+        if self.circle_timer_start:
+            elapsed_time = pygame.time.get_ticks() - self.circle_timer_start
+            if elapsed_time >= self.circle_duration:
+                self.circle_active = False
+                if self.player_sprite.game_state == GameState.IDLE:
+                    self.player_sprite.game_state = GameState.RUNNING
+                    self.player_sprite.game_started = True
+                elif self.player_sprite.game_state in [GameState.LOSE, GameState.WIN]:
+                    self.player_sprite.game_state = GameState.RESTART
+            else:
+                progress = elapsed_time / self.circle_duration
+                pygame.draw.circle(screen, (0, 155, 0), self.circle_center, int(self.circle_radius * progress))
+
+    def check_ship_in_circle(self):
+        ship_center = self.player_sprite.rect.center
+        distance = ((ship_center[0] - self.circle_center[0]) ** 2 + (ship_center[1] - self.circle_center[1]) ** 2) ** 0.5
+        return distance <= self.circle_radius
 
     def run(self):
 
         self.player.update()
         if self.player_sprite.game_state == GameState.IDLE:
             self.start_message()
+            if self.check_ship_in_circle():
+                if not self.circle_timer_start:
+                    self.circle_timer_start = pygame.time.get_ticks()
+            else:
+                self.circle_timer_start = None
+            self.draw_circle_timer()
+            self.player.draw(screen)  # Draw the player on top of the circle
             return
         if self.player_sprite.game_state == GameState.LOSE:
             self.death_message()
+            if self.check_ship_in_circle():
+                if not self.circle_timer_start:
+                    self.circle_timer_start = pygame.time.get_ticks()
+            else:
+                self.circle_timer_start = None
+            self.draw_circle_timer()
+            self.player.draw(screen)  # Draw the player on top of the circle
             return
         if self.player_sprite.game_state == GameState.RESTART:
             self.reset_game()
@@ -235,7 +274,6 @@ class Game:
         self.display_score()
 
         self.player.sprite.lasers.draw(screen)
-        # self.player.draw(screen)
         self.blocks.draw(screen)
         self.aliens.draw(screen)
         self.alien_lasers.draw(screen)
@@ -249,7 +287,7 @@ def start_game():
     game = Game()
 
     ALIENLASER = pygame.USEREVENT + 1
-    pygame.time.set_timer(ALIENLASER, 1200)
+    pygame.time.set_timer(ALIENLASER, 200)
 
     video_capture = cv2.VideoCapture(0)  # 0 represents the default camera
     video_capture.set(3, 1920)
@@ -264,10 +302,15 @@ def start_game():
                 game.alien_shoot()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if game.player_sprite.game_state == GameState.IDLE:
-                    game.player_sprite.game_state = GameState.RUNNING
-                    game.player_sprite.game_started = True
-                elif game.player_sprite.game_state in [GameState.LOSE, GameState.WIN] :
+                    game.circle_active = True
+                elif game.player_sprite.game_state in [GameState.LOSE, GameState.WIN]:
                     game.player_sprite.game_state = GameState.RESTART
+                elif game.player_sprite.game_state == GameState.LOSE:
+                    mouse_pos = pygame.mouse.get_pos()
+                    quit_rect = pygame.Rect((window_width/2)-50, (screen_height / 2)+100, 100, 50)
+                    if quit_rect.collidepoint(mouse_pos):
+                        pygame.quit()
+                        sys.exit()
 
         # Convert the frame from BGR to RGB for PyGame
         img = game.player_sprite.img
