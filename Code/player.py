@@ -56,7 +56,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = self.max_x_constraint
 
     def shoot_laser(self):
-        self.lasers.add(Laser(self.rect.center, -25, 700, 'lightblue'))
+        self.lasers.add(Laser(self.rect.center, -25, 'lightblue'))
 
     def read_fingers(self):
         _, img = self.cap.read()
@@ -69,9 +69,9 @@ class Player(pygame.sprite.Sprite):
             
             x, y, w, h = hand['bbox']
             x1 = x + w // 2
-            x1 = np.clip(x1, 100, 1150)
-            y1 = y + h
-            y1 = np.clip(y1, self.wh/2, self.wh)
+            x1 = np.clip(x1, 100, self.screen.get_width() - 100)
+            y1 = (y) + self.wh // 2
+            y1 = np.clip(y1, self.wh/2, self.wh - 30)
 
             map = x1 - 75
             map = map * (self.max_x_constraint - self.vwidth)

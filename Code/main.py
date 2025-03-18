@@ -104,7 +104,7 @@ class Game:
     def alien_shoot(self):
         if self.aliens.sprites():
             random_alien = choice(self.aliens.sprites())
-            laser_sprite = Laser(random_alien.rect.center,2,screen_height, 'red')
+            laser_sprite = Laser(random_alien.rect.center,2, 'red')
             self.alien_lasers.add(laser_sprite)
 
     def extra_alien_timer(self):
@@ -249,7 +249,7 @@ def start_game():
     game = Game()
 
     ALIENLASER = pygame.USEREVENT + 1
-    pygame.time.set_timer(ALIENLASER, 200)
+    pygame.time.set_timer(ALIENLASER, 1200)
 
     video_capture = cv2.VideoCapture(0)  # 0 represents the default camera
     video_capture.set(3, 1920)
