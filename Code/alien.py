@@ -6,7 +6,7 @@ class Alien(pygame.sprite.Sprite):
         super().__init__()
         file_path = 'Resources/' + color + '.png'
         self.image0 = pygame.image.load(file_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image0, (20 / 1, 15 / 1))
+        self.image = pygame.transform.scale(self.image0, (30, 22.5))
         self.rect = self.image.get_rect(topleft = (x,y))
 
         if color == 'red': self.value = 100
@@ -23,21 +23,21 @@ class Alien(pygame.sprite.Sprite):
 
 
 class Extra(pygame.sprite.Sprite):
-    def __init__(self,side,window_width, video_width):
+    def __init__(self,side,window_width, height):
         super().__init__()
         self.image0 = pygame.image.load('Resources/extra.png').convert_alpha()
-        self.image = pygame.transform.scale(self.image0, (20 / 1, 12 / 1))
+        self.image = pygame.transform.scale(self.image0, (30 / 1, 18 / 1))
 
         if side == 'right':
             x = window_width - 50
             self.speed = -3
         else:
-            x = video_width
+            x = 0
             self.speed = 3
-        y = 10
+        y = height
 
         self.rect = self.image.get_rect(topleft=(x,y))
-        self.vw = video_width
+        self.vw = 0
 
     def update(self):
         self.rect.x += self.speed

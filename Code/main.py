@@ -10,9 +10,11 @@ from laser import Laser
 class Game:
     def __init__(self):
         self.player_sprite = \
-            Player(((video_width + (screen_width / 2)), screen_height*0.9), screen_width, 5, video_width, screen, window_height)
+            Player((((screen_width / 2)), screen_height*0.9), screen_width, 5, screen, window_height)
         self.player = pygame.sprite.GroupSingle(self.player_sprite)
+        self.score_lives_height = 70  # Height for the score and lives section
         self.setup_game()
+        
     
     
     def setup_game(self):
@@ -29,12 +31,12 @@ class Game:
         self.blocks = pygame.sprite.Group()
         self.obstacle_amount = 6
         self.obstacle_x_positions = [num * (screen_width / self.obstacle_amount) for num in range(self.obstacle_amount)]
-        self.create_multiple_obstacles(*self.obstacle_x_positions, x_start=video_width + (screen_width/15), y_start=screen_height/2-30)
+        self.create_multiple_obstacles(*self.obstacle_x_positions, x_start=(screen_width/15), y_start=screen_height/2-30)
 
         # alien setup
         self.aliens = pygame.sprite.Group()
         self.alien_lasers = pygame.sprite.Group()
-        self.alien_setup(rows=9, cols=10)
+        self.alien_setup(rows=9, cols=21, y_offset=self.score_lives_height+30)
         self.alien_direction = 1
 
         self.extra = pygame.sprite.GroupSingle()
@@ -66,11 +68,11 @@ class Game:
         for offset_x in offset:
             self.create_obstacle(x_start, y_start, offset_x)
 
-    def alien_setup(self, rows, cols, x_distance=50, y_distance=20, x_offset=70, y_offset=50):
-        x_offset = x_offset + video_width
+    def alien_setup(self, rows, cols, x_distance=50, y_distance=30, x_offset=70, y_offset=50):
+        x_offset = x_offset
         for row_index, row in enumerate(range(rows)):
             for col_index, col in enumerate(range(cols)):
-                x = col_index * x_distance + x_offset
+                x = col_index * x_distance + x_offset + (col_index // 7 ) * 20
                 y = row_index * y_distance + y_offset
                 if row_index  < 3:
                     alien_sprite = Alien('yellow', x, y)
@@ -89,7 +91,7 @@ class Game:
                 self.alien_direction = -1
                 self.alien_move_down(6)
                 break
-            elif alien.rect.left <= video_width:
+            elif alien.rect.left <= 0:
                 self.alien_direction = 1
                 self.alien_move_down(6)
                 break
@@ -102,13 +104,13 @@ class Game:
     def alien_shoot(self):
         if self.aliens.sprites():
             random_alien = choice(self.aliens.sprites())
-            laser_sprite = Laser(random_alien.rect.center,6,screen_height, 'red')
+            laser_sprite = Laser(random_alien.rect.center,2,screen_height, 'red')
             self.alien_lasers.add(laser_sprite)
 
     def extra_alien_timer(self):
         self.extra_spawn_time -= 1
         if self.extra_spawn_time <= 0:
-            self.extra.add(Extra(choice(['right','left']),window_width, video_width))
+            self.extra.add(Extra(choice(['right','left']),window_width, self.score_lives_height))
             self.extra_spawn_time = randint(400,800)
 
     def collision_checks(self):
@@ -158,20 +160,21 @@ class Game:
 
     def display_lives(self):
         life_surf = self.font.render('Lives:', False, 'white')
-        life_rect = life_surf.get_rect(topleft = (10,100))
+        life_rect = life_surf.get_rect(topleft = (10, 10))
         screen.blit(life_surf, life_rect)
         for live in range(self.lives - 1):
             x = 100 + (live * (self.live_surf.get_size()[0] + 10))
-            screen.blit(self.live_surf,(x,100))
+            screen.blit(self.live_surf, (x, 10))
 
     def display_score(self):
         score_surf = self.font.render(f'Score: {self.score}', False, 'white')
-        score_rect = score_surf.get_rect(topleft = (10,130))
+        score_rect = score_surf.get_rect(topleft = (10, 30))
         screen.blit(score_surf, score_rect)
 
     def display_in_scope(self):
-        scope_surf = self.font.render('Hands out of camera scope!', False, 'red')
-        scope_rect = scope_surf.get_rect(topleft = (10,160))
+        scope_font = pygame.font.Font('Resources/Pixeled.ttf', 28)
+        scope_surf = scope_font.render('Hands out of camera scope!', False, 'white')
+        scope_rect = scope_surf.get_rect(center=(window_width / 2, (screen_height*2) / 3))
 
         if not self.player_sprite.in_scope:
             screen.blit(scope_surf, scope_rect)
@@ -179,11 +182,11 @@ class Game:
     def victory_message(self):
         if not self.aliens.sprites():
             victory_surf = self.font.render('You won', False, 'white')
-            victory_rect = victory_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-150))
+            victory_rect = victory_surf.get_rect(center=((window_width/2), (screen_height / 2)-150))
             screen.blit(victory_surf, victory_rect)
 
             start_surf = self.font.render('Click to restart', False, 'white')
-            start_rect = start_surf.get_rect(center=((window_width / 2) + (video_width / 2), (screen_height / 2) + 150))
+            start_rect = start_surf.get_rect(center=((window_width / 2), (screen_height / 2) + 150))
             screen.blit(start_surf, start_rect)
 
             self.player_sprite.game_state = GameState.WIN
@@ -197,16 +200,16 @@ class Game:
 
     def start_message(self):
         start_surf = self.font.render('Click to start the game', False, 'white')
-        start_rect = start_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-50))
+        start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(start_surf, start_rect)
 
     def death_message(self):
         dead_surf = self.font.render('You died!', False, 'white')
-        dead_rect = dead_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-50))
+        dead_rect = dead_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(dead_surf, dead_rect)
 
         start_surf = self.font.render('Click to restart', False, 'white')
-        start_rect = start_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)+50))
+        start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)+50))
         screen.blit(start_surf, start_rect)
 
     def run(self):
@@ -229,6 +232,7 @@ class Game:
         self.extra.update()
         self.collision_checks()
         self.display_lives()
+        self.display_score()
 
         self.player.sprite.lasers.draw(screen)
         # self.player.draw(screen)
@@ -236,8 +240,6 @@ class Game:
         self.aliens.draw(screen)
         self.alien_lasers.draw(screen)
         self.extra.draw(screen)
-        self.display_lives()
-        self.display_score()
         self.display_in_scope()
 
         self.victory_message()
@@ -247,7 +249,7 @@ def start_game():
     game = Game()
 
     ALIENLASER = pygame.USEREVENT + 1
-    pygame.time.set_timer(ALIENLASER, 800)
+    pygame.time.set_timer(ALIENLASER, 2400)
 
     video_capture = cv2.VideoCapture(0)  # 0 represents the default camera
     video_capture.set(3, 1920)
@@ -276,13 +278,9 @@ def start_game():
             frame_rgb = cv2.rotate(frame_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
             frame_rgb = pygame.surfarray.make_surface(frame_rgb)
 
-            # Scale the video frame to fit the specified dimensions
-            frame_scaled = pygame.transform.scale(frame_rgb, (video_width, video_height))
-
             # Clear the PyGame window and blit the video frame
             screen.fill((0, 0, 0))
-            screen.fill((50, 50, 50), (0, 0, video_width, screen.get_height()))
-            screen.blit(frame_scaled, (video_pos_x, video_pos_y))
+            #screen.fill((50, 50, 50), (0, game.score_lives_height, screen_width, screen.get_height() - game.score_lives_height))
         except:
             print("First game loop (image not initialized)")
 
@@ -295,20 +293,18 @@ if __name__ == '__main__':
     pygame.mixer.pre_init(44100, -16, 1, 512)
     pygame.init()
 
-    screen_width = 600
-    screen_height = 700
+     # Get the current screen resolution
+    info = pygame.display.Info()
+    screen_width = info.current_w
+    screen_height = info.current_h
 
-    video_width = 213 * 1.7
-    video_height = 120 * 1.7
-
-    window_width = screen_width + video_width
+    window_width = screen_width
     window_height = screen_height
 
-    video_pos_x = 0
-    video_pos_y = screen_height - video_height
-
-    screen = pygame.display.set_mode((window_width, window_height))
+    # Set the display mode to full screen
+    screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN)
     pygame.display.set_caption("Gesture-Controlled Space Invaders+")
+
 
     clock = pygame.time.Clock()
 

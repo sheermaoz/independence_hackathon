@@ -15,14 +15,14 @@ class GameState(Enum):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, cwidth, speed, vwidth, screen, height):
+    def __init__(self, pos, cwidth, speed, screen, height):
         super().__init__()
         self.image0 = pygame.image.load('Resources/player.png').convert_alpha()
         self.image = pygame.transform.scale(self.image0, (30 / 1, 15 / 1))
         self.rect = self.image.get_rect(midtop=pos)
 
         self.speed = speed
-        self.max_x_constraint = cwidth + vwidth
+        self.max_x_constraint = cwidth
         self.ready_to_shoot = False
         self.laser_time = 0
         self.laser_cooldown = 600
@@ -33,7 +33,7 @@ class Player(pygame.sprite.Sprite):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.detector = HandDetector(detectionCon=0.8, maxHands=1)
-        self.vwidth = vwidth
+        self.vwidth = 0
 
         self.fingers = None
         self.img = None
@@ -41,7 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.game_started = False
 
         self.screen = screen
-        self.ww = cwidth + vwidth
+        self.ww = cwidth
         self.wh = height
 
         self.laser_sound = pygame.mixer.Sound('Resources/laser.wav')
@@ -61,27 +61,6 @@ class Player(pygame.sprite.Sprite):
     def read_fingers(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
-
-        # Find hand and its landmarks
-        # self.feet = self.detector.findFeet(img, draw=False)
-        # self.img = img
-        # if self.feet:
-        #     foot = self.feet[0]
-        #     x, y, w, h = foot['bbox']
-        #     x1 = x + w // 2
-        #     x1 = np.clip(x1, 100, 1150)
-
-        #     map = x1 - 100
-        #     map = map * (self.max_x_constraint - self.vwidth)
-        #     map = map // 1150
-        #     self.rect.x = map + self.vwidth
-        #     self.rect.y = y + h
-
-
-        #     cv2.rectangle(img, (x - 20, y - 20),
-        #                     (x + w + 20, y + h + 20),
-        #                     (200, 0, 0), 10)
-        #     return True
         
         self.hands = self.detector.findHands(img, draw=False, flipType=True)
         self.img = img
@@ -92,9 +71,9 @@ class Player(pygame.sprite.Sprite):
             x1 = x + w // 2
             x1 = np.clip(x1, 100, 1150)
             y1 = y + h
-            y1 = np.clip(y1, 350, 650)
+            y1 = np.clip(y1, self.wh/2, self.wh)
 
-            map = x1 - 100
+            map = x1 - 75
             map = map * (self.max_x_constraint - self.vwidth)
             map = map // 1150
             self.rect.x = map + self.vwidth
