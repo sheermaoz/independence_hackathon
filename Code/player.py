@@ -6,6 +6,8 @@ from laser import Laser
 
 from enum import Enum
 
+color_mode = False
+
 class GameState(Enum):
     IDLE = "idle"
     RUNNING = "running"
@@ -20,6 +22,9 @@ class Player(pygame.sprite.Sprite):
         self.image0 = pygame.image.load('Resources/player.png').convert_alpha()
         self.image = pygame.transform.scale(self.image0, (30 / 1, 15 / 1))
         self.rect = self.image.get_rect(midtop=pos)
+
+        global color_mode
+        self.color_mode = color_mode
 
         self.speed = speed
         self.max_x_constraint = cwidth
@@ -63,6 +68,34 @@ class Player(pygame.sprite.Sprite):
 
     def shoot_laser(self):
         self.lasers.add(Laser(self.rect.center, -25, 'lightblue'))
+
+    def read_fingers(self):
+        _, img = self.cap.read()
+        img = cv2.flip(img, 1)
+        
+        self.hands = self.detector.findHands(img, draw=False, flipType=True)
+        self.img = img
+        if self.hands:
+            hand = self.hands[0]
+            
+            x, y, w, h = hand['bbox']
+            x1 = x + w // 2
+            x1 = np.clip(x1, 100, 1150)
+            y1 = y + h
+            y1 = np.clip(y1, self.wh/2, self.wh)
+
+            map = x1 - 75
+            map = map * (self.max_x_constraint - self.vwidth)
+            map = map // 1150
+            self.rect.x = map + self.vwidth
+            self.rect.y = y1
+
+
+            cv2.rectangle(img, (x - 20, y - 20),
+                            (x + w + 20, y + h + 20),
+                            (200, 0, 0), 10)
+            return True
+        return False
 
     def read_color(self):
         _, img = self.cap.read()
@@ -132,10 +165,16 @@ class Player(pygame.sprite.Sprite):
                 self.ready_to_flip = True
 
     def update(self):
-        if self.read_color():
-            self.in_scope = True
+        if (self.color_mode):
+            if self.read_color():
+                self.in_scope = True
+            else:
+                self.in_scope = False
         else:
-            self.in_scope = False
+            if self.read_fingers():
+                self.in_scope = True
+            else:
+                self.in_scope = False
 
         try:
             self.constraint()
