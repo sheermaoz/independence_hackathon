@@ -5,10 +5,17 @@ import obstacle
 from alien import Alien, Extra
 from random import choice, randint
 from laser import Laser
+from mainMenu import MainMenu  # Import the MainMenu class
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, video_width, screen_width, screen_height, window_width, window_height, screen):
+        self.video_width = video_width
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.window_width = window_width
+        self.window_height = window_height
+        self.screen = screen
         self.player_sprite = \
             Player(((video_width + (screen_width / 2)), screen_height*0.9), screen_width, 5, video_width, screen, window_height)
         self.player = pygame.sprite.GroupSingle(self.player_sprite)
@@ -28,8 +35,8 @@ class Game:
         self.block_size = 3
         self.blocks = pygame.sprite.Group()
         self.obstacle_amount = 6
-        self.obstacle_x_positions = [num * (screen_width / self.obstacle_amount) for num in range(self.obstacle_amount)]
-        self.create_multiple_obstacles(*self.obstacle_x_positions, x_start=video_width + (screen_width/15), y_start=screen_height/2-30)
+        self.obstacle_x_positions = [num * (self.screen_width / self.obstacle_amount) for num in range(self.obstacle_amount)]
+        self.create_multiple_obstacles(*self.obstacle_x_positions, x_start=self.video_width + (self.screen_width/15), y_start=self.screen_height/2-30)
 
         # alien setup
         self.aliens = pygame.sprite.Group()
@@ -67,7 +74,7 @@ class Game:
             self.create_obstacle(x_start, y_start, offset_x)
 
     def alien_setup(self, rows, cols, x_distance=50, y_distance=20, x_offset=70, y_offset=50):
-        x_offset = x_offset + video_width
+        x_offset = x_offset + self.video_width
         for row_index, row in enumerate(range(rows)):
             for col_index, col in enumerate(range(cols)):
                 x = col_index * x_distance + x_offset
@@ -85,11 +92,11 @@ class Game:
     def alien_position_checker(self):
         all_aliens = self.aliens.sprites()
         for alien in all_aliens:
-            if alien.rect.right >= window_width:
+            if alien.rect.right >= self.window_width:
                 self.alien_direction = -1
                 self.alien_move_down(6)
                 break
-            elif alien.rect.left <= video_width:
+            elif alien.rect.left <= self.video_width:
                 self.alien_direction = 1
                 self.alien_move_down(6)
                 break
@@ -102,13 +109,13 @@ class Game:
     def alien_shoot(self):
         if self.aliens.sprites():
             random_alien = choice(self.aliens.sprites())
-            laser_sprite = Laser(random_alien.rect.center,6,screen_height, 'red')
+            laser_sprite = Laser(random_alien.rect.center,6,self.screen_height, 'red')
             self.alien_lasers.add(laser_sprite)
 
     def extra_alien_timer(self):
         self.extra_spawn_time -= 1
         if self.extra_spawn_time <= 0:
-            self.extra.add(Extra(choice(['right','left']),window_width, video_width))
+            self.extra.add(Extra(choice(['right','left']), self.window_width, self.video_width))
             self.extra_spawn_time = randint(400,800)
 
     def collision_checks(self):
@@ -159,32 +166,32 @@ class Game:
     def display_lives(self):
         life_surf = self.font.render('Lives:', False, 'white')
         life_rect = life_surf.get_rect(topleft = (10,100))
-        screen.blit(life_surf, life_rect)
+        self.screen.blit(life_surf, life_rect)
         for live in range(self.lives - 1):
             x = 100 + (live * (self.live_surf.get_size()[0] + 10))
-            screen.blit(self.live_surf,(x,100))
+            self.screen.blit(self.live_surf,(x,100))
 
     def display_score(self):
         score_surf = self.font.render(f'Score: {self.score}', False, 'white')
         score_rect = score_surf.get_rect(topleft = (10,130))
-        screen.blit(score_surf, score_rect)
+        self.screen.blit(score_surf, score_rect)
 
     def display_in_scope(self):
         scope_surf = self.font.render('Hands out of camera scope!', False, 'red')
         scope_rect = scope_surf.get_rect(topleft = (10,160))
 
         if not self.player_sprite.in_scope:
-            screen.blit(scope_surf, scope_rect)
+            self.screen.blit(scope_surf, scope_rect)
 
     def victory_message(self):
         if not self.aliens.sprites():
             victory_surf = self.font.render('You won', False, 'white')
-            victory_rect = victory_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-150))
-            screen.blit(victory_surf, victory_rect)
+            victory_rect = victory_surf.get_rect(center=((self.window_width/2) + (self.video_width/2), (self.screen_height / 2)-150))
+            self.screen.blit(victory_surf, victory_rect)
 
             start_surf = self.font.render('Click to restart', False, 'white')
-            start_rect = start_surf.get_rect(center=((window_width / 2) + (video_width / 2), (screen_height / 2) + 150))
-            screen.blit(start_surf, start_rect)
+            start_rect = start_surf.get_rect(center=((self.window_width / 2) + (self.video_width / 2), (self.screen_height / 2) + 150))
+            self.screen.blit(start_surf, start_rect)
 
             self.player_sprite.game_state = GameState.WIN
             self.player_sprite.game_started = False
@@ -197,17 +204,17 @@ class Game:
 
     def start_message(self):
         start_surf = self.font.render('Click to start the game', False, 'white')
-        start_rect = start_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-50))
-        screen.blit(start_surf, start_rect)
+        start_rect = start_surf.get_rect(center=((self.window_width/2) + (self.video_width/2), (self.screen_height / 2)-50))
+        self.screen.blit(start_surf, start_rect)
 
     def death_message(self):
         dead_surf = self.font.render('You died!', False, 'white')
-        dead_rect = dead_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)-50))
-        screen.blit(dead_surf, dead_rect)
+        dead_rect = dead_surf.get_rect(center=((self.window_width/2) + (self.video_width/2), (self.screen_height / 2)-50))
+        self.screen.blit(dead_surf, dead_rect)
 
         start_surf = self.font.render('Click to restart', False, 'white')
-        start_rect = start_surf.get_rect(center=((window_width/2) + (video_width/2), (screen_height / 2)+50))
-        screen.blit(start_surf, start_rect)
+        start_rect = start_surf.get_rect(center=((self.window_width/2) + (self.video_width/2), (self.screen_height / 2)+50))
+        self.screen.blit(start_surf, start_rect)
 
     def run(self):
 
@@ -230,12 +237,12 @@ class Game:
         self.collision_checks()
         self.display_lives()
 
-        self.player.sprite.lasers.draw(screen)
+        self.player.sprite.lasers.draw(self.screen)
         # self.player.draw(screen)
-        self.blocks.draw(screen)
-        self.aliens.draw(screen)
-        self.alien_lasers.draw(screen)
-        self.extra.draw(screen)
+        self.blocks.draw(self.screen)
+        self.aliens.draw(self.screen)
+        self.alien_lasers.draw(self.screen)
+        self.extra.draw(self.screen)
         self.display_lives()
         self.display_score()
         self.display_in_scope()
@@ -243,8 +250,8 @@ class Game:
         self.victory_message()
 
 
-def start_game():
-    game = Game()
+def start_game(video_width, screen_width, screen_height, window_width, window_height, screen, video_pos_x, video_pos_y, clock):
+    game = Game(video_width, screen_width, screen_height, window_width, window_height, screen)
 
     ALIENLASER = pygame.USEREVENT + 1
     pygame.time.set_timer(ALIENLASER, 800)
@@ -290,8 +297,7 @@ def start_game():
         pygame.display.flip()
         clock.tick(60)
 
-
-if __name__ == '__main__':
+def main():
     pygame.mixer.pre_init(44100, -16, 1, 512)
     pygame.init()
 
@@ -312,4 +318,20 @@ if __name__ == '__main__':
 
     clock = pygame.time.Clock()
 
-    start_game()
+    main_menu = MainMenu(screen)
+    while True:
+        selected_option = main_menu.run()
+        if selected_option == 0:  # Play
+            start_game(video_width, screen_width, screen_height, window_width, window_height, screen, video_pos_x, video_pos_y, clock)
+        elif selected_option == 1:  # Settings
+            main_menu.display_selected_option()
+        elif selected_option == 2:  # History
+            main_menu.display_selected_option()
+        elif selected_option == 3:  # Credits
+            main_menu.display_selected_option()
+        elif selected_option == 4:  # Quit
+            pygame.quit()
+            sys.exit()
+
+if __name__ == '__main__':
+    main()
