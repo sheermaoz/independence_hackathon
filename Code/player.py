@@ -64,7 +64,7 @@ class Player(pygame.sprite.Sprite):
     def shoot_laser(self):
         self.lasers.add(Laser(self.rect.center, -25, 700, 'lightblue'))
 
-    def read_fingers(self):
+    def read_color(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -127,7 +127,7 @@ class Player(pygame.sprite.Sprite):
                 self.ready_to_flip = True
 
     def update(self):
-        if self.read_fingers():
+        if self.read_color():
             self.in_scope = True
         else:
             self.in_scope = False
