@@ -62,7 +62,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = self.max_x_constraint
 
     def shoot_laser(self):
-        self.lasers.add(Laser(self.rect.center, -25, 700, 'lightblue'))
+        self.lasers.add(Laser(self.rect.center, -25, 'lightblue'))
 
     def read_color(self):
         _, img = self.cap.read()

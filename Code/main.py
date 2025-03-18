@@ -104,7 +104,7 @@ class Game:
     def alien_shoot(self):
         if self.aliens.sprites():
             random_alien = choice(self.aliens.sprites())
-            laser_sprite = Laser(random_alien.rect.center,2,screen_height, 'red')
+            laser_sprite = Laser(random_alien.rect.center,2, 'red')
             self.alien_lasers.add(laser_sprite)
 
     def extra_alien_timer(self):
