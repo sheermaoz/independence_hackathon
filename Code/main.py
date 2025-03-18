@@ -204,7 +204,7 @@ class Game:
         screen.blit(start_surf, start_rect)
 
     def death_message(self):
-        dead_surf = self.font.render('You died!', False, 'white')
+        dead_surf = self.font.render('Game Over!', False, 'white')
         dead_rect = dead_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(dead_surf, dead_rect)
 
@@ -249,7 +249,7 @@ def start_game():
     game = Game()
 
     ALIENLASER = pygame.USEREVENT + 1
-    pygame.time.set_timer(ALIENLASER, 2400)
+    pygame.time.set_timer(ALIENLASER, 200)
 
     video_capture = cv2.VideoCapture(0)  # 0 represents the default camera
     video_capture.set(3, 1920)
@@ -278,14 +278,17 @@ def start_game():
             frame_rgb = cv2.rotate(frame_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
             frame_rgb = pygame.surfarray.make_surface(frame_rgb)
 
+            frame_scaled = pygame.transform.scale(frame_rgb, (screen_width*0.2, screen_height*0.2))
+
             # Clear the PyGame window and blit the video frame
             screen.fill((0, 0, 0))
-            #screen.fill((50, 50, 50), (0, game.score_lives_height, screen_width, screen.get_height() - game.score_lives_height))
+            screen.blit(frame_scaled, (0,screen_height*0.8))
+            
         except:
             print("First game loop (image not initialized)")
 
         game.run()
-        pygame.display.flip()
+        pygame.display.update()
         clock.tick(60)
 
 
@@ -293,7 +296,7 @@ if __name__ == '__main__':
     pygame.mixer.pre_init(44100, -16, 1, 512)
     pygame.init()
 
-     # Get the current screen resolution
+    # Get the current screen resolution
     info = pygame.display.Info()
     screen_width = info.current_w
     screen_height = info.current_h
@@ -301,10 +304,9 @@ if __name__ == '__main__':
     window_width = screen_width
     window_height = screen_height
 
-    # Set the display mode to full screen
+    # Set the display mode to full screen for the game
     screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN)
     pygame.display.set_caption("Gesture-Controlled Space Invaders+")
-
 
     clock = pygame.time.Clock()
 
