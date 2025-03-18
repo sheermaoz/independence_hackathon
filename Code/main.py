@@ -204,7 +204,7 @@ class Game:
         screen.blit(start_surf, start_rect)
 
     def death_message(self):
-        dead_surf = self.font.render('You died!', False, 'white')
+        dead_surf = self.font.render('Game Over!', False, 'white')
         dead_rect = dead_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(dead_surf, dead_rect)
 
@@ -249,7 +249,7 @@ def start_game():
     game = Game()
 
     ALIENLASER = pygame.USEREVENT + 1
-    pygame.time.set_timer(ALIENLASER, 2400)
+    pygame.time.set_timer(ALIENLASER, 200)
 
     video_capture = cv2.VideoCapture(0)  # 0 represents the default camera
     video_capture.set(3, 1920)
