@@ -278,14 +278,17 @@ def start_game():
             frame_rgb = cv2.rotate(frame_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
             frame_rgb = pygame.surfarray.make_surface(frame_rgb)
 
+            frame_scaled = pygame.transform.scale(frame_rgb, (screen_width*0.2, screen_height*0.2))
+
             # Clear the PyGame window and blit the video frame
             screen.fill((0, 0, 0))
-            #screen.fill((50, 50, 50), (0, game.score_lives_height, screen_width, screen.get_height() - game.score_lives_height))
+            screen.blit(frame_scaled, (0,screen_height*0.8))
+            
         except:
             print("First game loop (image not initialized)")
 
         game.run()
-        pygame.display.flip()
+        pygame.display.update()
         clock.tick(60)
 
 
@@ -293,7 +296,7 @@ if __name__ == '__main__':
     pygame.mixer.pre_init(44100, -16, 1, 512)
     pygame.init()
 
-     # Get the current screen resolution
+    # Get the current screen resolution
     info = pygame.display.Info()
     screen_width = info.current_w
     screen_height = info.current_h
@@ -301,10 +304,9 @@ if __name__ == '__main__':
     window_width = screen_width
     window_height = screen_height
 
-    # Set the display mode to full screen
+    # Set the display mode to full screen for the game
     screen = pygame.display.set_mode((window_width, window_height), pygame.FULLSCREEN)
     pygame.display.set_caption("Gesture-Controlled Space Invaders+")
-
 
     clock = pygame.time.Clock()
 
