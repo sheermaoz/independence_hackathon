@@ -49,6 +49,12 @@ class Player(pygame.sprite.Sprite):
 
         self.game_state = GameState.IDLE
 
+        self.previous_center_x = None
+        self.previous_center_y = None
+        self.stabilization_threshold = 200  # Threshold for stabilization
+
+
+
     def constraint(self):
         if self.rect.left <= self.vwidth:
             self.rect.left = self.vwidth
@@ -58,32 +64,47 @@ class Player(pygame.sprite.Sprite):
     def shoot_laser(self):
         self.lasers.add(Laser(self.rect.center, -25, 700, 'lightblue'))
 
-    def read_fingers(self):
+    def read_color(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
-        
-        self.hands = self.detector.findHands(img, draw=False, flipType=True)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        # Detect green color
+        self.lower_color = np.array([35, 100, 100])
+        self.upper_color = np.array([85, 255, 255])
+        mask = cv2.inRange(hsv, self.lower_color, self.upper_color)
+        mask = cv2.GaussianBlur(mask, (15, 15), 0)  # Apply Gaussian blur to reduce noise
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
         self.img = img
-        if self.hands:
-            hand = self.hands[0]
-            
-            x, y, w, h = hand['bbox']
-            x1 = x + w // 2
-            x1 = np.clip(x1, 100, 1150)
-            y1 = y + h
-            y1 = np.clip(y1, self.wh/2, self.wh)
+        if contours:
+            largest_contour = max(contours, key=cv2.contourArea)
+            if cv2.contourArea(largest_contour) > 500:  # Filter out small contours
+                M = cv2.moments(largest_contour)
+                if M["m00"] != 0:
+                    center_x = int(M["m10"] / M["m00"])
+                    center_y = int(M["m01"] / M["m00"])
 
-            map = x1 - 75
-            map = map * (self.max_x_constraint - self.vwidth)
-            map = map // 1150
-            self.rect.x = map + self.vwidth
-            self.rect.y = y1
+                    # Stabilize the movement
+                    if self.previous_center_x is not None and self.previous_center_y is not None:
+                        if abs(center_x - self.previous_center_x) > self.stabilization_threshold or abs(center_y - self.previous_center_y) > self.stabilization_threshold:
+                            center_x = self.previous_center_x
+                            center_y = self.previous_center_y
 
+                    self.previous_center_x = center_x
+                    self.previous_center_y = center_y
 
-            cv2.rectangle(img, (x - 20, y - 20),
-                            (x + w + 20, y + h + 20),
-                            (200, 0, 0), 10)
-            return True
+                    center_x = np.clip(center_x, 100, 1150)
+                    center_y = np.clip(center_y, 350, 650)
+
+                    map_x = center_x - 100
+                    map_x = map_x * (self.max_x_constraint - self.vwidth)
+                    map_x = map_x // 1150
+                    self.rect.x = map_x + self.vwidth
+                    self.rect.y = center_y
+
+                    cv2.circle(img, (center_x, center_y), 20, (0, 255, 0), 2)
+                    return True
         return False
 
     def get_input(self):
@@ -106,10 +127,10 @@ class Player(pygame.sprite.Sprite):
                 self.ready_to_flip = True
 
     def update(self):
-        if self.read_fingers():
+        if self.read_color():
             self.in_scope = True
-
-        else: self.in_scope = False
+        else:
+            self.in_scope = False
 
         try:
             self.constraint()
@@ -119,10 +140,7 @@ class Player(pygame.sprite.Sprite):
             pass
 
         self.recharge_shoot()
-
-      
         self.screen.blit(self.image, self.rect)
-
 
     def get_image(self):
         return self.img
