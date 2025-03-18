@@ -70,8 +70,8 @@ class Player(pygame.sprite.Sprite):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # Detect green color
-        self.lower_color = np.array([35, 100, 100])
-        self.upper_color = np.array([85, 255, 255])
+        self.lower_color = np.array([30, 75, 75])
+        self.upper_color = np.array([90, 255, 255])
         mask = cv2.inRange(hsv, self.lower_color, self.upper_color)
         mask = cv2.GaussianBlur(mask, (15, 15), 0)  # Apply Gaussian blur to reduce noise
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
