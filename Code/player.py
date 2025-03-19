@@ -6,7 +6,7 @@ from laser import Laser
 
 from enum import Enum
 
-color_mode = False
+color_mode = True
 
 class GameState(Enum):
     IDLE = "idle"
@@ -34,7 +34,7 @@ class Player(pygame.sprite.Sprite):
 
         self.lasers = pygame.sprite.Group()
 
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.detector = HandDetector(detectionCon=0.8, maxHands=1)
@@ -101,11 +101,12 @@ class Player(pygame.sprite.Sprite):
     def read_color(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # Detect green color
-        self.lower_color = np.array([30, 75, 75])
-        self.upper_color = np.array([90, 255, 255])
+        self.lower_color = np.array([39, 68, 80])
+        self.upper_color = np.array([93, 161, 255])
         mask = cv2.inRange(hsv, self.lower_color, self.upper_color)
         mask = cv2.GaussianBlur(mask, (15, 15), 0)  # Apply Gaussian blur to reduce noise
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -142,7 +143,7 @@ class Player(pygame.sprite.Sprite):
                     y = center_y + self.wh//2 - 100
                     self.rect.y = np.clip(y, self.wh/2, self.wh - 70)
 
-                    cv2.circle(img, (center_x, center_y), 20, (0, 255, 0), 2)
+                    cv2.circle(img, (center_x, center_y), 50, (0, 0, 255), 8)
                     return True
         return False
 
