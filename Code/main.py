@@ -14,11 +14,16 @@ class Game:
         self.player = pygame.sprite.GroupSingle(self.player_sprite)
         self.score_lives_height = 70  # Height for the score and lives section
         self.setup_game()
-        self.circle_center = (screen_width // 2, int(screen_height * 0.75))
+        self.circle_centers = [
+            (screen_width // 2, int(screen_height * 0.75)),  # Start circle
+            (screen_width // 2, int(screen_height * 0.87)),  # Mode switch circle (moved down a bit)
+            (screen_width - 100, screen_height - 150)       # Quit circle (moved up a bit)
+        ]
         self.circle_radius = 50
-        self.circle_timer_start = None
-        self.circle_duration = 1500  # 1.5 seconds
-        self.circle_active = False
+        self.circle_timers_start = [None, None, None]
+        self.circle_durations = [2000, 2000, 2000]  # 3 seconds for each circle
+        self.circle_active = [False, False, False]
+        self.mode_text = "Hand"
     
     def setup_game(self):
         # health and score setup
@@ -151,6 +156,7 @@ class Game:
                     if self.lives <= 0:
                         self.player_sprite.game_state = GameState.LOSE
                         self.player_sprite.game_started = False
+                        self.circle_timers_start = [None, None, None]  # Reset circle timers
                     self.explosion_sound.play()
 
         # aliens
@@ -206,6 +212,13 @@ class Game:
         start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
         screen.blit(start_surf, start_rect)
 
+        # Draw text for each circle
+        texts = ["Start", self.mode_text, "Quit"]
+        for i, text in enumerate(texts):
+            text_surf = self.font.render(text, False, 'white')
+            text_rect = text_surf.get_rect(center=(self.circle_centers[i][0], self.circle_centers[i][1]))
+            screen.blit(text_surf, text_rect)
+
     def death_message(self):
         dead_surf = self.font.render('Game Over!', False, 'white')
         dead_rect = dead_surf.get_rect(center=((window_width/2), (screen_height / 2)-50))
@@ -215,26 +228,39 @@ class Game:
         start_rect = start_surf.get_rect(center=((window_width/2), (screen_height / 2)+50))
         screen.blit(start_surf, start_rect)
 
-    def draw_circle_timer(self):
-        # Draw the white outline circle
-        pygame.draw.circle(screen, (255, 255, 255), self.circle_center, self.circle_radius, 2)
-        
-        if self.circle_timer_start:
-            elapsed_time = pygame.time.get_ticks() - self.circle_timer_start
-            if elapsed_time >= self.circle_duration:
-                self.circle_active = False
-                if self.player_sprite.game_state == GameState.IDLE:
-                    self.player_sprite.game_state = GameState.RUNNING
-                    self.player_sprite.game_started = True
-                elif self.player_sprite.game_state in [GameState.LOSE, GameState.WIN]:
-                    self.player_sprite.game_state = GameState.RESTART
-            else:
-                progress = elapsed_time / self.circle_duration
-                pygame.draw.circle(screen, (0, 155, 0), self.circle_center, int(self.circle_radius * progress))
+        # Draw text for each circle
+        texts = ["Start", self.mode_text, "Quit"]
+        for i, text in enumerate(texts):
+            text_surf = self.font.render(text, False, 'white')
+            text_rect = text_surf.get_rect(center=(self.circle_centers[i][0], self.circle_centers[i][1]))
+            screen.blit(text_surf, text_rect)
 
-    def check_ship_in_circle(self):
+    def draw_circle_timer(self, index):
+        # Draw the white outline circle
+        pygame.draw.circle(screen, (255, 255, 255), self.circle_centers[index], self.circle_radius, 2)
+        
+        if self.circle_timers_start[index]:
+            elapsed_time = pygame.time.get_ticks() - self.circle_timers_start[index]
+            if elapsed_time >= self.circle_durations[index]:
+                self.circle_timers_start[index] = pygame.time.get_ticks()  # Restart the timer
+                self.circle_active[index] = False
+                if index == 0:  # Start circle
+                    if self.player_sprite.game_state in [GameState.LOSE, GameState.WIN, GameState.IDLE]:
+                        self.player_sprite.game_state = GameState.RESTART
+                        self.player_sprite.game_started = True
+                elif index == 1:  # Mode switch circle
+                    self.player_sprite.color_mode = not self.player_sprite.color_mode
+                    self.mode_text = "Hand" if self.player_sprite.color_mode else "Color"
+                elif index == 2:  # Quit circle
+                    pygame.quit()
+                    sys.exit()
+            else:
+                progress = elapsed_time / self.circle_durations[index]
+                pygame.draw.circle(screen, (0, 155, 0), self.circle_centers[index], int(self.circle_radius * progress))
+
+    def check_ship_in_circle(self, index):
         ship_center = self.player_sprite.rect.center
-        distance = ((ship_center[0] - self.circle_center[0]) ** 2 + (ship_center[1] - self.circle_center[1]) ** 2) ** 0.5
+        distance = ((ship_center[0] - self.circle_centers[index][0]) ** 2 + (ship_center[1] - self.circle_centers[index][1]) ** 2) ** 0.5
         return distance <= self.circle_radius
 
     def run(self):
@@ -242,22 +268,28 @@ class Game:
         self.player.update()
         if self.player_sprite.game_state == GameState.IDLE:
             self.start_message()
-            if self.check_ship_in_circle():
-                if not self.circle_timer_start:
-                    self.circle_timer_start = pygame.time.get_ticks()
-            else:
-                self.circle_timer_start = None
-            self.draw_circle_timer()
+            for i in range(3):
+                if self.check_ship_in_circle(i):
+                    if not self.circle_timers_start[i]:
+                        self.circle_timers_start[i] = pygame.time.get_ticks()
+                else:
+                    self.circle_timers_start[i] = None
+                self.draw_circle_timer(i)
+            if not self.player_sprite.in_scope:
+                self.player_sprite.rect.center = (self.circle_centers[1][0], self.circle_centers[1][1] + 100)  # Move ship below the hand/color circle
             self.player.draw(screen)  # Draw the player on top of the circle
             return
         if self.player_sprite.game_state == GameState.LOSE:
             self.death_message()
-            if self.check_ship_in_circle():
-                if not self.circle_timer_start:
-                    self.circle_timer_start = pygame.time.get_ticks()
-            else:
-                self.circle_timer_start = None
-            self.draw_circle_timer()
+            for i in range(3):
+                if self.check_ship_in_circle(i):
+                    if not self.circle_timers_start[i]:
+                        self.circle_timers_start[i] = pygame.time.get_ticks()
+                else:
+                    self.circle_timers_start[i] = None
+                self.draw_circle_timer(i)
+            if not self.player_sprite.in_scope:
+                self.player_sprite.rect.center = (self.circle_centers[1][0], self.circle_centers[1][1] + 100)  # Move ship below the hand/color circle
             self.player.draw(screen)  # Draw the player on top of the circle
             return
         if self.player_sprite.game_state == GameState.RESTART:

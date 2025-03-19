@@ -14,6 +14,7 @@ class GameState(Enum):
     WIN = "win"
     LOSE = "lose"
     RESTART = "restart"
+    MainMenu = "mainmenu"
 
 
 class Player(pygame.sprite.Sprite):
