@@ -321,11 +321,11 @@ def start_game():
             frame_rgb = cv2.rotate(frame_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
             frame_rgb = pygame.surfarray.make_surface(frame_rgb)
 
-            frame_scaled = pygame.transform.scale(frame_rgb, (screen_width*0.2, screen_height*0.2))
+            frame_scaled = pygame.transform.scale(frame_rgb, (screen_height*0.2, screen_width*0.2))
 
             # Clear the PyGame window and blit the video frame
             screen.fill((0, 0, 0))
-            screen.blit(frame_scaled, (0,screen_height*0.8))
+            screen.blit(frame_scaled, (0,screen_height - screen_width*0.2))
             
         except:
             print("First game loop (image not initialized)")

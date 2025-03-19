@@ -34,7 +34,7 @@ class Player(pygame.sprite.Sprite):
 
         self.lasers = pygame.sprite.Group()
 
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.detector = HandDetector(detectionCon=0.8, maxHands=1)
@@ -72,6 +72,7 @@ class Player(pygame.sprite.Sprite):
     def read_fingers(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
         
         self.hands = self.detector.findHands(img, draw=False, flipType=True)
         self.img = img
@@ -80,13 +81,13 @@ class Player(pygame.sprite.Sprite):
             
             x, y, w, h = hand['bbox']
             x1 = x + w // 2
-            x1 = np.clip(x1, 100, 1150)
+            x1 = np.clip(x1, 0, self.ww - 100)
             y1 = y + h
-            y1 = np.clip(y1, self.wh/2, self.wh)
+            y1 = np.clip(y1, self.wh/2, self.wh - 30)
 
-            map = x1 - 75
+            map = x1 - 100
             map = map * (self.max_x_constraint - self.vwidth)
-            map = map // 1150
+            map = map // (self.ww / 1.9)
             self.rect.x = map + self.vwidth
             self.rect.y = y1
 
@@ -128,7 +129,7 @@ class Player(pygame.sprite.Sprite):
                     self.previous_center_y = center_y
 
                     center_x = np.clip(center_x, 100, 1150)
-                    #center_y = np.clip(center_y, self.wh/2, self.wh - 30)
+                    center_y = np.clip(center_y, self.wh/2, self.wh - 30)
 
 
                             # Ensure center_x and center_y are integers
