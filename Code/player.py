@@ -72,6 +72,7 @@ class Player(pygame.sprite.Sprite):
     def read_fingers(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
         self.hands = self.detector.findHands(img, draw=False, flipType=True)
         self.img = img
@@ -100,6 +101,7 @@ class Player(pygame.sprite.Sprite):
     def read_color(self):
         _, img = self.cap.read()
         img = cv2.flip(img, 1)
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # Detect green color

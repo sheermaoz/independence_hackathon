@@ -17,7 +17,7 @@ class Game:
         self.circle_center = (screen_width // 2, int(screen_height * 0.75))
         self.circle_radius = 50
         self.circle_timer_start = None
-        self.circle_duration = 1500  # 1.5 seconds
+        self.circle_duration = 2000  # 1.5 seconds
         self.circle_active = False
     
     def setup_game(self):
@@ -315,10 +315,10 @@ def start_game():
         # Convert the frame from BGR to RGB for PyGame
         img = game.player_sprite.img
         img = cv2.flip(img, 1)
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         try:
             frame_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            frame_rgb = cv2.rotate(frame_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate the frame
             frame_rgb = pygame.surfarray.make_surface(frame_rgb)
 
             frame_scaled = pygame.transform.scale(frame_rgb, (screen_width*0.2, screen_height*0.2))
